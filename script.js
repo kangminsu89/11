@@ -1,6 +1,86 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: brown; icon-glyph: magic;
+
+document.getElementById("icsFile").addEventListener("change", handleFileSelect);
+
+async function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) {
+    displayMessage("No file selected.");
+    return;
+  }
+
+  // Read the content of the file
+  const fileContent = await file.text();
+
+  if (!fileContent) {
+    displayMessage("File could not be read.");
+    return;
+  }
+
+  displayMessage("File loaded successfully. Processing...");
+
+  try {
+    // Parse the ICS content
+    const events = parseICS(fileContent);
+    displayMessage(`Found ${events.length} events in the file.`);
+    
+    // Call your main processing function
+    main(events);
+  } catch (error) {
+    displayMessage(`Error processing file: ${error.message}`);
+  }
+}
+
+function parseICS(content) {
+  const events = [];
+  const lines = content.split("\n");
+  let event = null;
+
+  for (let line of lines) {
+    line = line.trim();
+    if (line.startsWith("BEGIN:VEVENT")) {
+      event = {};
+    } else if (line.startsWith("END:VEVENT")) {
+      if (event) events.push(event);
+      event = null;
+    } else if (event) {
+      if (line.startsWith("SUMMARY:")) {
+        event.summary = line.replace("SUMMARY:", "").trim();
+      } else if (line.startsWith("DTSTART")) {
+        event.start = parseICSTime(line.replace(/.*:/, "").trim());
+      } else if (line.startsWith("DTEND")) {
+        event.end = parseICSTime(line.replace(/.*:/, "").trim());
+      }
+    }
+  }
+
+  return events;
+}
+
+function parseICSTime(icsTime) {
+  const year = parseInt(icsTime.substring(0, 4));
+  const month = parseInt(icsTime.substring(4, 6)) - 1;
+  const day = parseInt(icsTime.substring(6, 8));
+  const hour = parseInt(icsTime.substring(9, 11) || "0");
+  const minute = parseInt(icsTime.substring(11, 13) || "0");
+  return new Date(year, month, day, hour, minute);
+}
+
+function displayMessage(message) {
+  const output = document.getElementById("output");
+  output.textContent += message + "\n";
+}
+
+async function main(events) {
+  displayMessage("Processing events...");
+  for (const event of events) {
+    displayMessage(`Event: ${event.summary}, Start: ${event.start}, End: ${event.end}`);
+  }
+  displayMessage("Processing complete.");
+}
+
 async function main() {
   try {
     console.log("스텝 1: .ics 파일 선택 시작");
