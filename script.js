@@ -6,8 +6,10 @@ document.getElementById("icsFile").addEventListener("change", handleFileSelect);
 
 async function handleFileSelect(event) {
   const file = event.target.files[0];
+  const output = document.getElementById("output");
+
   if (!file) {
-    displayMessage("No file selected.");
+    displayMessage("No file selected.", output);
     return;
   }
 
@@ -15,21 +17,21 @@ async function handleFileSelect(event) {
   const fileContent = await file.text();
 
   if (!fileContent) {
-    displayMessage("File could not be read.");
+    displayMessage("File could not be read.", output);
     return;
   }
 
-  displayMessage("File loaded successfully. Processing...");
+  displayMessage("File loaded successfully. Processing...", output);
 
   try {
     // Parse the ICS content
     const events = parseICS(fileContent);
-    displayMessage(`Found ${events.length} events in the file.`);
-    
+    displayMessage(`Found ${events.length} events in the file.`, output);
+
     // Call your main processing function
-    main(events);
+    main(events, output);
   } catch (error) {
-    displayMessage(`Error processing file: ${error.message}`);
+    displayMessage(`Error processing file: ${error.message}`, output);
   }
 }
 
@@ -68,17 +70,18 @@ function parseICSTime(icsTime) {
   return new Date(year, month, day, hour, minute);
 }
 
-function displayMessage(message) {
-  const output = document.getElementById("output");
-  output.textContent += message + "\n";
+function displayMessage(message, outputElement) {
+  outputElement.textContent += message + "\n";
 }
 
-async function main(events) {
-  displayMessage("Processing events...");
+async function main(events, output) {
+  displayMessage("Processing events...", output);
+
   for (const event of events) {
-    displayMessage(`Event: ${event.summary}, Start: ${event.start}, End: ${event.end}`);
+    displayMessage(`Event: ${event.summary}, Start: ${event.start}, End: ${event.end}`, output);
   }
-  displayMessage("Processing complete.");
+
+  displayMessage("Processing complete.", output);
 }
 
 async function main() {
